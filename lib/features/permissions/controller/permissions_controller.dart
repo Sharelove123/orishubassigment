@@ -8,12 +8,14 @@ class PermissionsState {
   final bool cameraGranted;
   final bool microphoneGranted;
   final bool allRequiredGranted;
+  final String? healthError;
 
   PermissionsState({
     this.healthGranted = false,
     this.locationGranted = false,
     this.cameraGranted = false,
     this.microphoneGranted = false,
+    this.healthError,
   }) : allRequiredGranted = healthGranted && locationGranted;
 
   PermissionsState copyWith({
@@ -21,12 +23,14 @@ class PermissionsState {
     bool? locationGranted,
     bool? cameraGranted,
     bool? microphoneGranted,
+    String? healthError,
   }) {
     return PermissionsState(
       healthGranted: healthGranted ?? this.healthGranted,
       locationGranted: locationGranted ?? this.locationGranted,
       cameraGranted: cameraGranted ?? this.cameraGranted,
       microphoneGranted: microphoneGranted ?? this.microphoneGranted,
+      healthError: healthError,
     );
   }
 }
@@ -54,8 +58,24 @@ class PermissionsController extends Notifier<PermissionsState> {
 
   Future<void> requestHealth() async {
     final healthService = ref.read(healthServiceProvider);
+
+    // Check if Health Connect is available first
+    final available = await healthService.isHealthConnectAvailable();
+    if (!available) {
+      state = state.copyWith(
+        healthGranted: false,
+        healthError: 'Health Connect is not installed. Opening Play Store...',
+      );
+      // This will trigger the Play Store to install Health Connect
+      await healthService.requestAuthorization();
+      return;
+    }
+
     final granted = await healthService.requestAuthorization();
-    state = state.copyWith(healthGranted: granted);
+    state = state.copyWith(
+      healthGranted: granted,
+      healthError: granted ? null : 'Permission denied. Please allow in Health Connect settings.',
+    );
   }
 
   Future<void> requestLocation() async {

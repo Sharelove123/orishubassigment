@@ -112,27 +112,64 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
                   ],
                 ),
               ),
+              if (state.healthError != null)
+                FadeInUp(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(state.healthError!,
+                              style: TextStyle(fontSize: 12, color: Colors.orange[800])),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               FadeInUp(
                 delay: const Duration(milliseconds: 600),
-                child: ElevatedButton(
-                  onPressed: state.allRequiredGranted
-                      ? () {
+                child: Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: state.allRequiredGranted
+                          ? () {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (_) => const DashboardScreen()),
+                              );
+                            }
+                          : null,
+                      child: Text(
+                        state.allRequiredGranted
+                            ? 'Continue to Dashboard'
+                            : 'Grant Required Permissions',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    if (!state.allRequiredGranted)
+                      TextButton(
+                        onPressed: () {
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                                 builder: (_) => const DashboardScreen()),
                           );
-                        }
-                      : null,
-                  child: Text(
-                    state.allRequiredGranted
-                        ? 'Continue to Dashboard'
-                        : 'Grant Required Permissions',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                        },
+                        child: const Text('Skip for now',
+                            style: TextStyle(color: Colors.grey)),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
           ),
         ),

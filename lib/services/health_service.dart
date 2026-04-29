@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 class HealthService {
   final Health _health = Health();
+  bool _configured = false;
 
   static const List<HealthDataType> _types = [
     HealthDataType.STEPS,
@@ -15,13 +16,46 @@ class HealthService {
   static List<HealthDataAccess> get _permissions =>
       _types.map((_) => HealthDataAccess.READ).toList();
 
+  /// Configure the health plugin (must be called before any other method)
+  Future<void> _ensureConfigured() async {
+    if (!_configured) {
+      await _health.configure();
+      _configured = true;
+    }
+  }
+
+  /// Check if Health Connect is available on this device
+  Future<bool> isHealthConnectAvailable() async {
+    try {
+      await _ensureConfigured();
+      final status = await _health.getHealthConnectSdkStatus();
+      debugPrint('Health Connect SDK status: $status');
+      return status == HealthConnectSdkStatus.sdkAvailable;
+    } catch (e) {
+      debugPrint('Health Connect availability check error: $e');
+      return false;
+    }
+  }
+
   /// Request authorization to access health data
   Future<bool> requestAuthorization() async {
     try {
+      await _ensureConfigured();
+
+      // Check Health Connect availability first
+      final available = await isHealthConnectAvailable();
+      if (!available) {
+        debugPrint('Health Connect not available on this device');
+        // Install Health Connect
+        await _health.installHealthConnect();
+        return false;
+      }
+
       final authorized = await _health.requestAuthorization(
         _types,
         permissions: _permissions,
       );
+      debugPrint('Health authorization result: $authorized');
       return authorized;
     } catch (e) {
       debugPrint('Health authorization error: $e');
@@ -32,12 +66,14 @@ class HealthService {
   /// Check if health data access is authorized
   Future<bool> hasPermissions() async {
     try {
+      await _ensureConfigured();
       final authorized = await _health.hasPermissions(
         _types,
         permissions: _permissions,
       );
       return authorized ?? false;
     } catch (e) {
+      debugPrint('Health hasPermissions error: $e');
       return false;
     }
   }
@@ -48,6 +84,7 @@ class HealthService {
     final startTime = since ?? DateTime(now.year, now.month, now.day);
 
     try {
+      await _ensureConfigured();
       final healthData = await _health.getHealthDataFromTypes(
         types: _types,
         startTime: startTime,
