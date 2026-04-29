@@ -12,21 +12,41 @@ class SubmissionScreen extends ConsumerStatefulWidget {
 }
 
 class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
+  // Device Info
+  final _deviceIdController = TextEditingController(text: '123456');
+
+  // Activity
   final _stepsController = TextEditingController(text: '11178');
+  final _caloriesController = TextEditingController(text: '487.3');
+
+  // Body Metrics
+  final _weightController = TextEditingController(text: '72.4');
+  final _heartRateController = TextEditingController(text: '78');
+
+  // Location
   final _latController = TextEditingController(text: '18.2915625');
   final _longController = TextEditingController(text: '79.4695052');
-  final _deviceIdController = TextEditingController(text: '123456');
+  final _accuracyController = TextEditingController(text: '128.9');
+  final _altitudeController = TextEditingController(text: '181.4');
+  final _speedController = TextEditingController(text: '0');
 
   @override
   void dispose() {
+    _deviceIdController.dispose();
     _stepsController.dispose();
+    _caloriesController.dispose();
+    _weightController.dispose();
+    _heartRateController.dispose();
     _latController.dispose();
     _longController.dispose();
-    _deviceIdController.dispose();
+    _accuracyController.dispose();
+    _altitudeController.dispose();
+    _speedController.dispose();
     super.dispose();
   }
 
   Map<String, dynamic> _buildPayload() {
+    final now = DateTime.now().toIso8601String();
     return {
       "sleep": [],
       "steps": [
@@ -34,26 +54,56 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "type": "STEPS",
           "unit": "COUNT",
           "value": _stepsController.text,
-          "end_time": DateTime.now().toIso8601String(),
+          "end_time": now,
           "platform": "android",
-          "start_time": DateTime.now().subtract(const Duration(hours: 14)).toIso8601String(),
+          "start_time": DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
           "source_name": "health_connect"
         }
       ],
-      "weight": [],
-      "calories": [],
+      "weight": [
+        {
+          "type": "WEIGHT",
+          "unit": "KILOGRAMS",
+          "value": _weightController.text,
+          "end_time": now,
+          "platform": "android",
+          "start_time": now,
+          "source_name": "health_connect"
+        }
+      ],
+      "calories": [
+        {
+          "type": "CALORIES_EXPENDED",
+          "unit": "KILOCALORIES",
+          "value": _caloriesController.text,
+          "end_time": now,
+          "platform": "android",
+          "start_time": now,
+          "source_name": "health_connect"
+        }
+      ],
       "location": [
         {
-          "speed": 0,
-          "accuracy": 128.8990020751953,
-          "altitude": 181.40000915527344,
+          "speed": double.tryParse(_speedController.text) ?? 0.0,
+          "accuracy": double.tryParse(_accuracyController.text) ?? 0.0,
+          "altitude": double.tryParse(_altitudeController.text) ?? 0.0,
           "latitude": double.tryParse(_latController.text) ?? 0.0,
           "platform": "android",
           "longitude": double.tryParse(_longController.text) ?? 0.0,
-          "timestamp": DateTime.now().toIso8601String()
+          "timestamp": now
         }
       ],
-      "heart_rate": []
+      "heart_rate": [
+        {
+          "type": "HEART_RATE",
+          "unit": "BEATS_PER_MINUTE",
+          "value": _heartRateController.text,
+          "end_time": now,
+          "platform": "android",
+          "start_time": now,
+          "source_name": "health_connect"
+        }
+      ]
     };
   }
 
@@ -63,7 +113,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Polso Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Polso Health Data', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -75,81 +125,55 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             FadeInDown(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryTeal.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.analytics_outlined, color: AppTheme.primaryTeal, size: 32),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sync Your Data',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.darkNavy,
-                              ),
-                        ),
-                        const Text('Enter health metrics below'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              child: _buildBanner(),
             ),
             const SizedBox(height: 32),
-            _buildInputSection('Device Info', [
-              _buildTextField(_deviceIdController, 'Device ID', Icons.devices),
+            _buildInputSection('Device Configuration', [
+              _buildTextField(_deviceIdController, 'Device ID', Icons.devices_other),
             ]),
             const SizedBox(height: 24),
-            _buildInputSection('Activity', [
-              _buildTextField(_stepsController, 'Steps Count', Icons.directions_walk, keyboardType: TextInputType.number),
-            ]),
-            const SizedBox(height: 24),
-            _buildInputSection('Location', [
+            _buildInputSection('Activity & Energy', [
               Row(
                 children: [
-                  Expanded(child: _buildTextField(_latController, 'Latitude', Icons.location_on, keyboardType: TextInputType.number)),
+                  Expanded(child: _buildTextField(_stepsController, 'Steps', Icons.directions_run, keyboardType: TextInputType.number)),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(_longController, 'Longitude', Icons.location_on, keyboardType: TextInputType.number)),
+                  Expanded(child: _buildTextField(_caloriesController, 'Calories', Icons.local_fire_department, keyboardType: TextInputType.number)),
                 ],
               ),
             ]),
-            const SizedBox(height: 32),
-            if (state.resultMessage != null)
-              FadeInUp(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: state.isSuccess ? Colors.green[50] : Colors.red[50],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        state.isSuccess ? Icons.check_circle_outline : Icons.error_outline,
-                        color: state.isSuccess ? Colors.green : Colors.red,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          state.resultMessage!,
-                          style: TextStyle(
-                            color: state.isSuccess ? Colors.green[800] : Colors.red[800],
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            const SizedBox(height: 24),
+            _buildInputSection('Vitals & Metrics', [
+              Row(
+                children: [
+                  Expanded(child: _buildTextField(_weightController, 'Weight (kg)', Icons.monitor_weight_outlined, keyboardType: TextInputType.number)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildTextField(_heartRateController, 'Heart Rate (bpm)', Icons.favorite_border, keyboardType: TextInputType.number)),
+                ],
               ),
+            ]),
+            const SizedBox(height: 24),
+            _buildInputSection('Positioning', [
+              Row(
+                children: [
+                  Expanded(child: _buildTextField(_latController, 'Latitude', Icons.map_outlined, keyboardType: TextInputType.number)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildTextField(_longController, 'Longitude', Icons.map_outlined, keyboardType: TextInputType.number)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: _buildTextField(_accuracyController, 'Accuracy', Icons.gps_fixed, keyboardType: TextInputType.number)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildTextField(_altitudeController, 'Altitude', Icons.height, keyboardType: TextInputType.number)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(_speedController, 'Speed', Icons.speed, keyboardType: TextInputType.number),
+            ]),
+            const SizedBox(height: 40),
+            if (state.resultMessage != null)
+              FadeInUp(child: _buildStatusMessage(state)),
             FadeInUp(
               delay: const Duration(milliseconds: 200),
               child: ElevatedButton.icon(
@@ -161,16 +185,10 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                               deviceId: _deviceIdController.text,
                             );
                       },
-                icon: state.isSubmitting
-                    ? const SizedBox.shrink()
-                    : const Icon(Icons.cloud_upload_outlined),
+                icon: state.isSubmitting ? const SizedBox.shrink() : const Icon(Icons.sync),
                 label: state.isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text('Submit Health Data'),
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Sync All Data'),
               ),
             ),
             const SizedBox(height: 40),
@@ -180,18 +198,51 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
     );
   }
 
+  Widget _buildBanner() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryTeal.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.health_and_safety_outlined, color: AppTheme.primaryTeal, size: 40),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Comprehensive Sync',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkNavy,
+                      ),
+                ),
+                const Text('Fill all fields to sync your health record.'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInputSection(String title, List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
-              ),
+          title.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+            color: AppTheme.primaryTeal,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         ...children,
       ],
     );
@@ -203,8 +254,38 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 20),
+        prefixIcon: Icon(icon, size: 18),
         isDense: true,
+      ),
+    );
+  }
+
+  Widget _buildStatusMessage(SubmissionState state) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: state.isSuccess ? Colors.green[50] : Colors.red[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: state.isSuccess ? Colors.green[100]! : Colors.red[100]!),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            state.isSuccess ? Icons.check_circle : Icons.error,
+            color: state.isSuccess ? Colors.green : Colors.red,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              state.resultMessage!,
+              style: TextStyle(
+                color: state.isSuccess ? Colors.green[800] : Colors.red[800],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
