@@ -23,6 +23,11 @@ class DashboardScreen extends ConsumerWidget {
         centerTitle: true,
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () =>
+                ref.read(dashboardControllerProvider.notifier).refreshData(),
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -41,6 +46,15 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
 
+            // Loading indicator
+            if (state.isLoadingData)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+
             // Health Data Cards
             Text('HEALTH OVERVIEW',
                 style: TextStyle(
@@ -55,14 +69,14 @@ class DashboardScreen extends ConsumerWidget {
                     child: FadeInLeft(
                         delay: const Duration(milliseconds: 200),
                         child: _buildMetricCard(
-                            'Steps', '—', Icons.directions_run,
+                            'Steps', state.steps, Icons.directions_run,
                             AppTheme.primaryTeal))),
                 const SizedBox(width: 12),
                 Expanded(
                     child: FadeInRight(
                         delay: const Duration(milliseconds: 200),
                         child: _buildMetricCard(
-                            'Heart Rate', '—', Icons.favorite,
+                            'Heart Rate', state.heartRate, Icons.favorite,
                             Colors.redAccent))),
               ],
             ),
@@ -73,14 +87,16 @@ class DashboardScreen extends ConsumerWidget {
                     child: FadeInLeft(
                         delay: const Duration(milliseconds: 400),
                         child: _buildMetricCard(
-                            'Calories', '—', Icons.local_fire_department,
+                            'Calories', state.calories,
+                            Icons.local_fire_department,
                             Colors.orange))),
                 const SizedBox(width: 12),
                 Expanded(
                     child: FadeInRight(
                         delay: const Duration(milliseconds: 400),
                         child: _buildMetricCard(
-                            'Weight', '—', Icons.monitor_weight_outlined,
+                            'Weight', state.weight,
+                            Icons.monitor_weight_outlined,
                             Colors.blueAccent))),
               ],
             ),
@@ -88,7 +104,8 @@ class DashboardScreen extends ConsumerWidget {
             FadeInUp(
               delay: const Duration(milliseconds: 600),
               child: _buildMetricCard(
-                  'Sleep', '—', Icons.bedtime_outlined, Colors.deepPurple),
+                  'Sleep', state.sleep, Icons.bedtime_outlined,
+                  Colors.deepPurple),
             ),
             const SizedBox(height: 40),
 
