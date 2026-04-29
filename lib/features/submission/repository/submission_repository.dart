@@ -14,6 +14,7 @@ class SubmissionRepository {
     required Map<String, dynamic> payload,
   }) async {
     try {
+      // Try form-data first (as specified in API docs)
       final formData = FormData.fromMap({
         'type': type,
         'device_id': deviceId,
@@ -23,13 +24,10 @@ class SubmissionRepository {
       final response = await _apiClient.dio.post(
         '/polso-health/submissions',
         data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-        ),
       );
       return SubmissionResponse.fromJson(response.data);
     } on DioException catch (e) {
-      throw e.response?.data['message'] ?? 'Submission failed';
+      throw e.response?.data?['message'] ?? e.message ?? 'Submission failed';
     }
   }
 }

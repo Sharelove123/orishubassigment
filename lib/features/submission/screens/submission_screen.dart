@@ -46,7 +46,10 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
   }
 
   Map<String, dynamic> _buildPayload() {
-    final now = DateTime.now().toIso8601String();
+    final now = DateTime.now().toUtc();
+    final startOfDay = DateTime.utc(now.year, now.month, now.day).toIso8601String();
+    final nowIso = now.toIso8601String();
+
     return {
       "sleep": [],
       "steps": [
@@ -54,9 +57,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "type": "STEPS",
           "unit": "COUNT",
           "value": _stepsController.text,
-          "end_time": now,
+          "end_time": nowIso,
           "platform": "android",
-          "start_time": DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+          "start_time": startOfDay,
           "source_name": "health_connect"
         }
       ],
@@ -65,9 +68,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "type": "WEIGHT",
           "unit": "KILOGRAMS",
           "value": _weightController.text,
-          "end_time": now,
+          "end_time": nowIso,
           "platform": "android",
-          "start_time": now,
+          "start_time": nowIso,
           "source_name": "health_connect"
         }
       ],
@@ -76,9 +79,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "type": "CALORIES_EXPENDED",
           "unit": "KILOCALORIES",
           "value": _caloriesController.text,
-          "end_time": now,
+          "end_time": nowIso,
           "platform": "android",
-          "start_time": now,
+          "start_time": startOfDay,
           "source_name": "health_connect"
         }
       ],
@@ -90,7 +93,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "latitude": double.tryParse(_latController.text) ?? 0.0,
           "platform": "android",
           "longitude": double.tryParse(_longController.text) ?? 0.0,
-          "timestamp": now
+          "timestamp": nowIso
         }
       ],
       "heart_rate": [
@@ -98,9 +101,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "type": "HEART_RATE",
           "unit": "BEATS_PER_MINUTE",
           "value": _heartRateController.text,
-          "end_time": now,
+          "end_time": nowIso,
           "platform": "android",
-          "start_time": now,
+          "start_time": nowIso,
           "source_name": "health_connect"
         }
       ]

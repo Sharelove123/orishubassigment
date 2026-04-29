@@ -15,6 +15,9 @@ class AuthRepository {
           'email': email,
           'password': password,
         },
+        options: Options(
+          contentType: 'application/json',
+        ),
       );
       return LoginResponse.fromJson(response.data);
     } on DioException catch (e) {
