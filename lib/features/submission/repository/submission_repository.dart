@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../../core/api_client.dart';
 import '../../../models/submission_model.dart';
@@ -14,16 +13,17 @@ class SubmissionRepository {
     required Map<String, dynamic> payload,
   }) async {
     try {
-      // Try form-data first (as specified in API docs)
-      final formData = FormData.fromMap({
-        'type': type,
-        'device_id': deviceId,
-        'payload': jsonEncode(payload),
-      });
-
+      // Send as raw JSON body with Content-Type: application/json
       final response = await _apiClient.dio.post(
         '/polso-health/submissions',
-        data: formData,
+        data: {
+          'type': type,
+          'device_id': deviceId,
+          'payload': payload,
+        },
+        options: Options(
+          contentType: 'application/json',
+        ),
       );
       return SubmissionResponse.fromJson(response.data);
     } on DioException catch (e) {
