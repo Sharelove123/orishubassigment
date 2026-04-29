@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:animate_do/animate_do.dart';
 import '../controller/login_controller.dart';
 import '../../../core/theme.dart';
-import '../../submission/screens/submission_screen.dart';
+import '../../permissions/screens/permissions_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -30,7 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen(loginControllerProvider, (previous, next) {
       if (next.isLoggedIn) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const SubmissionScreen()),
+          MaterialPageRoute(builder: (_) => const PermissionsScreen()),
         );
       }
       if (next.errorMessage != null) {
