@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../../../providers.dart';
 
 class DashboardState {
@@ -56,10 +58,24 @@ class DashboardState {
 }
 
 class DashboardController extends Notifier<DashboardState> {
+  Timer? _refreshTimer;
+
   @override
   DashboardState build() {
     _loadLastSyncTime();
     _loadHealthData();
+
+    // Auto-refresh health data every 30 seconds
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      debugPrint('[Dashboard] Auto-refreshing health data...');
+      _loadHealthData();
+    });
+
+    // Cancel timer when provider is disposed
+    ref.onDispose(() {
+      _refreshTimer?.cancel();
+    });
+
     return DashboardState();
   }
 
@@ -76,6 +92,8 @@ class DashboardController extends Notifier<DashboardState> {
     try {
       final healthService = ref.read(healthServiceProvider);
       final data = await healthService.fetchHealthData();
+
+      debugPrint('[Dashboard] Health data received: $data');
 
       // Extract values from the formatted payload
       final stepsList = data['steps'] as List;
@@ -95,6 +113,7 @@ class DashboardController extends Notifier<DashboardState> {
         isLoadingData: false,
       );
     } catch (e) {
+      debugPrint('[Dashboard] Health data error: $e');
       state = state.copyWith(isLoadingData: false);
     }
   }

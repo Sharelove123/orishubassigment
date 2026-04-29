@@ -21,6 +21,7 @@ class HealthService {
     if (!_configured) {
       await _health.configure();
       _configured = true;
+      debugPrint('[HealthService] Configured successfully');
     }
   }
 
@@ -29,10 +30,10 @@ class HealthService {
     try {
       await _ensureConfigured();
       final status = await _health.getHealthConnectSdkStatus();
-      debugPrint('Health Connect SDK status: $status');
+      debugPrint('[HealthService] Health Connect SDK status: $status');
       return status == HealthConnectSdkStatus.sdkAvailable;
     } catch (e) {
-      debugPrint('Health Connect availability check error: $e');
+      debugPrint('[HealthService] Health Connect availability check error: $e');
       return false;
     }
   }
@@ -45,8 +46,7 @@ class HealthService {
       // Check Health Connect availability first
       final available = await isHealthConnectAvailable();
       if (!available) {
-        debugPrint('Health Connect not available on this device');
-        // Install Health Connect
+        debugPrint('[HealthService] Health Connect not available — opening Play Store');
         await _health.installHealthConnect();
         return false;
       }
@@ -55,10 +55,10 @@ class HealthService {
         _types,
         permissions: _permissions,
       );
-      debugPrint('Health authorization result: $authorized');
+      debugPrint('[HealthService] Authorization result: $authorized');
       return authorized;
     } catch (e) {
-      debugPrint('Health authorization error: $e');
+      debugPrint('[HealthService] Authorization error: $e');
       return false;
     }
   }
@@ -71,9 +71,10 @@ class HealthService {
         _types,
         permissions: _permissions,
       );
+      debugPrint('[HealthService] hasPermissions: $authorized');
       return authorized ?? false;
     } catch (e) {
-      debugPrint('Health hasPermissions error: $e');
+      debugPrint('[HealthService] hasPermissions error: $e');
       return false;
     }
   }
@@ -83,17 +84,36 @@ class HealthService {
     final now = DateTime.now();
     final startTime = since ?? DateTime(now.year, now.month, now.day);
 
+    debugPrint('[HealthService] Fetching data from $startTime to $now');
+
     try {
       await _ensureConfigured();
+
+      // Check permissions first
+      final hasPerms = await hasPermissions();
+      if (!hasPerms) {
+        debugPrint('[HealthService] No permissions — requesting authorization');
+        final granted = await requestAuthorization();
+        if (!granted) {
+          debugPrint('[HealthService] Authorization denied — returning empty');
+          return _emptyPayload();
+        }
+      }
+
       final healthData = await _health.getHealthDataFromTypes(
         types: _types,
         startTime: startTime,
         endTime: now,
       );
 
+      debugPrint('[HealthService] Got ${healthData.length} data points');
+      for (final point in healthData) {
+        debugPrint('[HealthService]   ${point.type}: ${point.value} (${point.dateFrom} → ${point.dateTo})');
+      }
+
       return _formatHealthData(healthData, now);
     } catch (e) {
-      debugPrint('Health data fetch error: $e');
+      debugPrint('[HealthService] Fetch error: $e');
       return _emptyPayload();
     }
   }
@@ -111,6 +131,7 @@ class HealthService {
         totalSteps += (point.value as NumericHealthValue).numericValue;
       }
     }
+    debugPrint('[HealthService] Total steps: $totalSteps');
 
     // Get latest heart rate readings
     final heartRates = data
@@ -149,6 +170,7 @@ class HealthService {
         totalCalories += (point.value as NumericHealthValue).numericValue;
       }
     }
+    debugPrint('[HealthService] Total calories: $totalCalories');
 
     // Get sleep data
     final sleepData = data
