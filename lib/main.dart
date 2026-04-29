@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'services/sync_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SyncService.initializeBackgroundSync();
+
   runApp(
     const ProviderScope(
       child: PolsoHealthApp(),

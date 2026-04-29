@@ -1,13 +1,16 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../services/storage_service.dart';
+import 'constants.dart';
 
 class ApiClient {
   final Dio dio;
+  final StorageService _storageService;
 
-  ApiClient()
-      : dio = Dio(
+  ApiClient({required StorageService storageService})
+      : _storageService = storageService,
+        dio = Dio(
           BaseOptions(
-            baseUrl: 'https://orishub.com/api',
+            baseUrl: AppConstants.baseUrl,
             headers: {
               'Accept': 'application/json',
             },
@@ -15,8 +18,7 @@ class ApiClient {
         ) {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('auth_token');
+        final token = await _storageService.getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
