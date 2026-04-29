@@ -40,6 +40,12 @@ dependencies:
   intl: ^0.20.2
   animate_do: ^5.1.0
   flutter_riverpod: ^3.3.1
+  health: ^13.3.1
+  geolocator: ^14.0.2
+  permission_handler: ^12.0.1
+  workmanager: ^0.9.0+3
+  flutter_secure_storage: ^10.0.0
+  connectivity_plus: ^7.1.1
 
 dev_dependencies:
   flutter_test:
