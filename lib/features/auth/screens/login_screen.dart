@@ -13,8 +13,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController(text: 'effety@gmail.com');
-  final _passwordController = TextEditingController(text: '741852741');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
@@ -76,6 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _emailController,
                   decoration: const InputDecoration(
                     labelText: 'Email Address',
+                    hintText: 'effety@gmail.com',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
                   keyboardType: TextInputType.emailAddress,
@@ -88,6 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _passwordController,
                   decoration: const InputDecoration(
                     labelText: 'Password',
+                    hintText: '741852741',
                     prefixIcon: Icon(Icons.lock_outline),
                   ),
                   obscureText: true,
