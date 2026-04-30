@@ -149,5 +149,5 @@ class DashboardController extends Notifier<DashboardState> {
 
 final dashboardControllerProvider =
     NotifierProvider<DashboardController, DashboardState>(() {
-  return DashboardController();
-});
+      return DashboardController();
+    });

@@ -18,6 +18,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
   // Activity
   final _stepsController = TextEditingController(text: '11178');
   final _caloriesController = TextEditingController(text: '487.3');
+  final _sleepController = TextEditingController(text: '420'); // 7 hours
 
   // Body Metrics
   final _weightController = TextEditingController(text: '72.4');
@@ -35,6 +36,7 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
     _deviceIdController.dispose();
     _stepsController.dispose();
     _caloriesController.dispose();
+    _sleepController.dispose();
     _weightController.dispose();
     _heartRateController.dispose();
     _latController.dispose();
@@ -51,7 +53,17 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
     final nowIso = now.toIso8601String();
 
     return {
-      "sleep": [],
+      "sleep": [
+        {
+          "type": "SLEEP_SESSION",
+          "unit": "MINUTES",
+          "value": _sleepController.text,
+          "end_time": nowIso,
+          "platform": "android",
+          "start_time": now.subtract(Duration(minutes: int.tryParse(_sleepController.text) ?? 0)).toIso8601String(),
+          "source_name": "health_connect"
+        }
+      ],
       "steps": [
         {
           "type": "STEPS",
@@ -141,6 +153,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                   Expanded(child: _buildTextField(_stepsController, 'Steps', Icons.directions_run, keyboardType: TextInputType.number)),
                   const SizedBox(width: 12),
                   Expanded(child: _buildTextField(_caloriesController, 'Calories', Icons.local_fire_department, keyboardType: TextInputType.number)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildTextField(_sleepController, 'Sleep (min)', Icons.bedtime_outlined, keyboardType: TextInputType.number)),
                 ],
               ),
             ]),

@@ -16,8 +16,10 @@ class DashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Polso Health',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Polso Health',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -29,9 +31,9 @@ class DashboardScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
           ),
         ],
       ),
@@ -41,9 +43,7 @@ class DashboardScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Sync Status Banner
-            FadeInDown(
-              child: _buildSyncBanner(context, state),
-            ),
+            FadeInDown(child: _buildSyncBanner(context, state)),
             const SizedBox(height: 32),
 
             // Loading indicator
@@ -56,56 +56,80 @@ class DashboardScreen extends ConsumerWidget {
               ),
 
             // Health Data Cards
-            Text('HEALTH OVERVIEW',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: Colors.grey[500])),
+            Text(
+              'HEALTH OVERVIEW',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                color: Colors.grey[500],
+              ),
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                    child: FadeInLeft(
-                        delay: const Duration(milliseconds: 200),
-                        child: _buildMetricCard(
-                            'Steps', state.steps, Icons.directions_run,
-                            AppTheme.primaryTeal))),
+                  child: FadeInLeft(
+                    delay: const Duration(milliseconds: 200),
+                    child: _buildMetricCard(
+                      'Steps',
+                      state.steps,
+                      Icons.directions_run,
+                      AppTheme.primaryTeal,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
-                    child: FadeInRight(
-                        delay: const Duration(milliseconds: 200),
-                        child: _buildMetricCard(
-                            'Heart Rate', state.heartRate, Icons.favorite,
-                            Colors.redAccent))),
+                  child: FadeInRight(
+                    delay: const Duration(milliseconds: 200),
+                    child: _buildMetricCard(
+                      'Heart Rate',
+                      state.heartRate,
+                      Icons.favorite,
+                      Colors.redAccent,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                    child: FadeInLeft(
-                        delay: const Duration(milliseconds: 400),
-                        child: _buildMetricCard(
-                            'Calories', state.calories,
-                            Icons.local_fire_department,
-                            Colors.orange))),
+                  child: FadeInLeft(
+                    delay: const Duration(milliseconds: 400),
+                    child: _buildMetricCard(
+                      'Calories',
+                      state.calories,
+                      Icons.local_fire_department,
+                      Colors.orange,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
-                    child: FadeInRight(
-                        delay: const Duration(milliseconds: 400),
-                        child: _buildMetricCard(
-                            'Weight', state.weight,
-                            Icons.monitor_weight_outlined,
-                            Colors.blueAccent))),
+                  child: FadeInRight(
+                    delay: const Duration(milliseconds: 400),
+                    child: _buildMetricCard(
+                      'Weight',
+                      state.weight,
+                      Icons.monitor_weight_outlined,
+                      Colors.blueAccent,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
             FadeInUp(
               delay: const Duration(milliseconds: 600),
               child: _buildMetricCard(
-                  'Sleep', state.sleep, Icons.bedtime_outlined,
-                  Colors.deepPurple),
+                'Sleep',
+                state.sleep,
+                Icons.bedtime_outlined,
+                Colors.deepPurple,
+              ),
             ),
             const SizedBox(height: 40),
 
@@ -121,27 +145,33 @@ class DashboardScreen extends ConsumerWidget {
                         : Colors.red[50],
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                        color: state.lastSyncSuccess
-                            ? Colors.green[200]!
-                            : Colors.red[200]!),
+                      color: state.lastSyncSuccess
+                          ? Colors.green[200]!
+                          : Colors.red[200]!,
+                    ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                          state.lastSyncSuccess
-                              ? Icons.check_circle
-                              : Icons.error,
-                          color: state.lastSyncSuccess
-                              ? Colors.green
-                              : Colors.red),
+                        state.lastSyncSuccess
+                            ? Icons.check_circle
+                            : Icons.error,
+                        color: state.lastSyncSuccess
+                            ? Colors.green
+                            : Colors.red,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
-                          child: Text(state.syncMessage!,
-                              style: TextStyle(
-                                  color: state.lastSyncSuccess
-                                      ? Colors.green[800]
-                                      : Colors.red[800],
-                                  fontWeight: FontWeight.w500))),
+                        child: Text(
+                          state.syncMessage!,
+                          style: TextStyle(
+                            color: state.lastSyncSuccess
+                                ? Colors.green[800]
+                                : Colors.red[800],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -154,8 +184,8 @@ class DashboardScreen extends ConsumerWidget {
                 onPressed: state.isSyncing
                     ? null
                     : () => ref
-                        .read(dashboardControllerProvider.notifier)
-                        .syncNow(),
+                          .read(dashboardControllerProvider.notifier)
+                          .syncNow(),
                 icon: state.isSyncing
                     ? const SizedBox.shrink()
                     : const Icon(Icons.sync),
@@ -164,7 +194,10 @@ class DashboardScreen extends ConsumerWidget {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Text('Sync Now'),
               ),
             ),
@@ -203,9 +236,10 @@ class DashboardScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
-                state.isSyncing ? Icons.sync : Icons.cloud_done_outlined,
-                color: Colors.white,
-                size: 32),
+              state.isSyncing ? Icons.sync : Icons.cloud_done_outlined,
+              color: Colors.white,
+              size: 32,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -213,20 +247,25 @@ class DashboardScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    state.isSyncing
-                        ? 'Syncing...'
-                        : state.lastSyncSuccess
-                            ? 'Synced'
-                            : 'Ready to Sync',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold)),
+                  state.isSyncing
+                      ? 'Syncing...'
+                      : state.lastSyncSuccess
+                      ? 'Synced'
+                      : 'Ready to Sync',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text('Last sync: $formattedTime',
-                    style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 13)),
+                Text(
+                  'Last sync: $formattedTime',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
           ),
@@ -236,7 +275,11 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildMetricCard(
-      String title, String value, IconData icon, Color color) {
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -249,15 +292,23 @@ class DashboardScreen extends ConsumerWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 12),
-          Text(title,
-              style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
