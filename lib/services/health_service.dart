@@ -10,12 +10,7 @@ class HealthService {
     HealthDataType.HEART_RATE,
     HealthDataType.WEIGHT,
     HealthDataType.ACTIVE_ENERGY_BURNED,
-    HealthDataType.BASAL_ENERGY_BURNED,
     HealthDataType.SLEEP_ASLEEP,
-    HealthDataType.SLEEP_LIGHT,
-    HealthDataType.SLEEP_DEEP,
-    HealthDataType.SLEEP_REM,
-    HealthDataType.SLEEP_SESSION,
   ];
 
   static List<HealthDataAccess> get _permissions =>
@@ -87,14 +82,9 @@ class HealthService {
   /// Fetch health data since [since] timestamp
   Future<Map<String, dynamic>> fetchHealthData({DateTime? since}) async {
     final now = DateTime.now();
-    // Default activity start time is today
-    final activityStartTime = since ?? DateTime(now.year, now.month, now.day);
-    
-    // Weight lookback is longer (30 days) to get the latest known weight
-    final weightStartTime = now.subtract(const Duration(days: 30));
+    final startTime = since ?? DateTime(now.year, now.month, now.day);
 
-    debugPrint('[HealthService] Fetching activity data from $activityStartTime to $now');
-    debugPrint('[HealthService] Fetching weight data from $weightStartTime to $now');
+    debugPrint('[HealthService] Fetching data from $startTime to $now');
 
     try {
       await _ensureConfigured();
@@ -110,24 +100,18 @@ class HealthService {
         }
       }
 
-      // Fetch regular activity data
-      final activityData = await _health.getHealthDataFromTypes(
-        types: _types.where((t) => t != HealthDataType.WEIGHT).toList(),
-        startTime: activityStartTime,
+      final healthData = await _health.getHealthDataFromTypes(
+        types: _types,
+        startTime: startTime,
         endTime: now,
       );
 
-      // Fetch weight data separately with longer lookback
-      final weightData = await _health.getHealthDataFromTypes(
-        types: [HealthDataType.WEIGHT],
-        startTime: weightStartTime,
-        endTime: now,
-      );
+      debugPrint('[HealthService] Got ${healthData.length} data points');
+      for (final point in healthData) {
+        debugPrint('[HealthService]   ${point.type}: ${point.value} (${point.dateFrom} → ${point.dateTo})');
+      }
 
-      final combinedData = [...activityData, ...weightData];
-
-      debugPrint('[HealthService] Got ${combinedData.length} data points');
-      return _formatHealthData(combinedData, now);
+      return _formatHealthData(healthData, now);
     } catch (e) {
       debugPrint('[HealthService] Fetch error: $e');
       return _emptyPayload();
@@ -164,13 +148,9 @@ class HealthService {
             })
         .toList();
 
-    // Get latest weight (sorted by date descending)
-    final sortedWeightData = data
+    // Get latest weight
+    final weights = data
         .where((p) => p.type == HealthDataType.WEIGHT)
-        .toList()
-      ..sort((a, b) => b.dateTo.compareTo(a.dateTo));
-
-    final weights = sortedWeightData
         .map((p) => {
               "type": "WEIGHT",
               "unit": "KILOGRAMS",
@@ -183,74 +163,28 @@ class HealthService {
             })
         .toList();
 
-    // Aggregate calories (Active + Basal if available)
+    // Aggregate calories
     double totalCalories = 0;
     for (final point in data) {
-      if (point.type == HealthDataType.ACTIVE_ENERGY_BURNED || 
-          point.type == HealthDataType.BASAL_ENERGY_BURNED) {
+      if (point.type == HealthDataType.ACTIVE_ENERGY_BURNED) {
         totalCalories += (point.value as NumericHealthValue).numericValue;
       }
     }
-    debugPrint('[HealthService] Total calories (Active + Basal): $totalCalories');
+    debugPrint('[HealthService] Total calories: $totalCalories');
 
-    // Get sleep data (Aggregate all sleep stages)
-    final sleepTypes = [
-      HealthDataType.SLEEP_ASLEEP,
-      HealthDataType.SLEEP_LIGHT,
-      HealthDataType.SLEEP_DEEP,
-      HealthDataType.SLEEP_REM,
-      HealthDataType.SLEEP_SESSION,
-    ];
-
-    // For sleep, we want to capture the total duration. 
-    // Usually SLEEP_SESSION is the overall record. 
-    // If not available, we aggregate the stages.
-    final sleepPoints = data.where((p) => sleepTypes.contains(p.type)).toList();
-    
-    // Sort to find the latest session
-    sleepPoints.sort((a, b) => b.dateTo.compareTo(a.dateTo));
-
-    List<Map<String, dynamic>> sleepData = [];
-    
-    if (sleepPoints.isNotEmpty) {
-      // If we have a session, use it primarily
-      final sessions = sleepPoints.where((p) => p.type == HealthDataType.SLEEP_SESSION).toList();
-      
-      if (sessions.isNotEmpty) {
-        sleepData = sessions.map((p) => {
-          "type": "SLEEP_SESSION",
-          "unit": "MINUTES",
-          "value": p.dateTo.difference(p.dateFrom).inMinutes.toString(),
-          "end_time": p.dateTo.toUtc().toIso8601String(),
-          "platform": "android",
-          "start_time": p.dateFrom.toUtc().toIso8601String(),
-          "source_name": "health_connect"
-        }).toList();
-      } else {
-        // Otherwise use the aggregate of stages
-        int totalMinutes = 0;
-        DateTime? earliestStart;
-        DateTime? latestEnd;
-
-        for (final p in sleepPoints) {
-          totalMinutes += p.dateTo.difference(p.dateFrom).inMinutes;
-          if (earliestStart == null || p.dateFrom.isBefore(earliestStart)) earliestStart = p.dateFrom;
-          if (latestEnd == null || p.dateTo.isAfter(latestEnd)) latestEnd = p.dateTo;
-        }
-
-        if (totalMinutes > 0) {
-          sleepData = [{
-            "type": "SLEEP_AGGREGATE",
-            "unit": "MINUTES",
-            "value": totalMinutes.toString(),
-            "end_time": latestEnd?.toUtc().toIso8601String() ?? nowIso,
-            "platform": "android",
-            "start_time": earliestStart?.toUtc().toIso8601String() ?? nowIso,
-            "source_name": "health_connect"
-          }];
-        }
-      }
-    }
+    // Get sleep data
+    final sleepData = data
+        .where((p) => p.type == HealthDataType.SLEEP_ASLEEP)
+        .map((p) => {
+              "type": "SLEEP_ASLEEP",
+              "unit": "MINUTES",
+              "value": p.dateTo.difference(p.dateFrom).inMinutes.toString(),
+              "end_time": p.dateTo.toUtc().toIso8601String(),
+              "platform": "android",
+              "start_time": p.dateFrom.toUtc().toIso8601String(),
+              "source_name": "health_connect"
+            })
+        .toList();
 
     return {
       "sleep": sleepData,
