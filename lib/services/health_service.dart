@@ -13,15 +13,17 @@ class HealthService {
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.TOTAL_CALORIES_BURNED,
     HealthDataType.SLEEP_SESSION,
+    HealthDataType.BODY_MASS_INDEX,
   ];
 
+  /// Steps + calories only — heart rate is fetched separately with a longer window
   static const List<HealthDataType> _activityTypes = [
     HealthDataType.STEPS,
-    HealthDataType.HEART_RATE,
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.TOTAL_CALORIES_BURNED,
   ];
 
+  static const Duration _heartRateLookback = Duration(hours: 24);
   static const Duration _weightLookback = Duration(days: 365);
   static const Duration _sleepLookback = Duration(days: 7);
 
@@ -125,11 +127,15 @@ class HealthService {
   Future<Map<String, dynamic>> fetchHealthData({DateTime? since}) async {
     final now = DateTime.now();
     final activityStartTime = since ?? DateTime(now.year, now.month, now.day);
+    final heartRateStartTime = now.subtract(_heartRateLookback);
     final weightStartTime = now.subtract(_weightLookback);
     final sleepStartTime = now.subtract(_sleepLookback);
 
     debugPrint(
       '[HealthService] Fetching activity data from $activityStartTime to $now',
+    );
+    debugPrint(
+      '[HealthService] Fetching heart rate from $heartRateStartTime to $now',
     );
     debugPrint(
       '[HealthService] Fetching weight data from $weightStartTime to $now',
@@ -169,8 +175,16 @@ class HealthService {
           endTime: now,
           label: 'activity',
         ),
+        // Heart rate fetched separately with 24h lookback
         ...await _getHealthData(
-          types: const [HealthDataType.WEIGHT],
+          types: const [HealthDataType.HEART_RATE],
+          startTime: heartRateStartTime,
+          endTime: now,
+          label: 'heart_rate',
+        ),
+        // Weight + BMI fetched with 365-day lookback
+        ...await _getHealthData(
+          types: const [HealthDataType.WEIGHT, HealthDataType.BODY_MASS_INDEX],
           startTime: weightStartTime,
           endTime: now,
           label: 'weight',
@@ -250,10 +264,16 @@ class HealthService {
     }
     debugPrint('[HealthService] Total steps: $totalSteps');
 
-    // Get latest heart rate readings
+    // Get latest heart rate readings (24h lookback)
     final heartRates =
         data.where((p) => p.type == HealthDataType.HEART_RATE).toList()
           ..sort((a, b) => a.dateTo.compareTo(b.dateTo));
+    debugPrint('[HealthService] Heart rate points found: ${heartRates.length}');
+    if (heartRates.isNotEmpty) {
+      debugPrint('[HealthService] Latest HR: ${_numericValue(heartRates.last)} bpm at ${heartRates.last.dateTo}');
+    } else {
+      debugPrint('[HealthService] ⚠️ No heart rate data in last 24 hours');
+    }
 
     final heartRateData = heartRates
         .map(
@@ -269,10 +289,16 @@ class HealthService {
         )
         .toList();
 
-    // Get latest weight
+    // Get latest weight (also check BODY_MASS_INDEX as fallback)
     final weightPoints =
-        data.where((p) => p.type == HealthDataType.WEIGHT).toList()
+        data.where((p) => p.type == HealthDataType.WEIGHT || p.type == HealthDataType.BODY_MASS_INDEX).toList()
           ..sort((a, b) => b.dateTo.compareTo(a.dateTo));
+    debugPrint('[HealthService] Weight points found: ${weightPoints.length}');
+    if (weightPoints.isNotEmpty) {
+      debugPrint('[HealthService] Latest weight: ${_numericValue(weightPoints.first)} at ${weightPoints.first.dateTo}');
+    } else {
+      debugPrint('[HealthService] ⚠️ No weight data in last 365 days');
+    }
 
     final weights = weightPoints
         .map(
