@@ -95,12 +95,14 @@ class DashboardController extends Notifier<DashboardState> {
 
       debugPrint('[Dashboard] Health data received: $data');
 
-      // Extract values from the formatted payload
-      final stepsList = data['steps'] as List;
-      final caloriesList = data['calories'] as List;
-      final weightList = data['weight'] as List;
-      final heartRateList = data['heart_rate'] as List;
-      final sleepList = data['sleep'] as List;
+      // Extract values from the formatted payload with null safety
+      final stepsList = data['steps'] as List? ?? [];
+      final caloriesList = data['calories'] as List? ?? [];
+      final weightList = data['weight'] as List? ?? [];
+      final heartRateList = data['heart_rate'] as List? ?? [];
+      final sleepList = data['sleep'] as List? ?? [];
+
+      debugPrint('[Dashboard] Steps: ${stepsList.length}, Calories: ${caloriesList.length}, Weight: ${weightList.length}, HR: ${heartRateList.length}, Sleep: ${sleepList.length}');
 
       state = state.copyWith(
         steps: stepsList.isNotEmpty ? stepsList[0]['value'] : '0',

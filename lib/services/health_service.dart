@@ -142,13 +142,22 @@ class HealthService {
       await _ensureConfigured();
 
       // Check permissions first
-      final hasPerms = await hasPermissions();
+      var hasPerms = await hasPermissions();
       if (!hasPerms) {
         debugPrint('[HealthService] No permissions - requesting authorization');
         final granted = await requestAuthorization();
         if (!granted) {
-          debugPrint('[HealthService] Authorization denied - returning empty');
-          return _emptyPayload();
+          debugPrint('[HealthService] Authorization denied - requesting again after delay');
+          // Try requesting one more time after a short delay
+          await Future.delayed(const Duration(milliseconds: 500));
+          final retryGranted = await requestAuthorization();
+          if (!retryGranted) {
+            debugPrint('[HealthService] Authorization denied after retry - returning empty');
+            return _emptyPayload();
+          }
+          hasPerms = true;
+        } else {
+          hasPerms = true;
         }
       }
       await _requestHistoryAuthorizationIfAvailable();
@@ -195,15 +204,28 @@ class HealthService {
     required String label,
   }) async {
     try {
+      debugPrint('[HealthService] Requesting $label data from $startTime to $endTime');
+      debugPrint('[HealthService] Types requested: ${types.map((t) => t.name).join(", ")}');
+      
       final points = await _health.getHealthDataFromTypes(
         types: types,
         startTime: startTime,
         endTime: endTime,
       );
-      debugPrint('[HealthService] $label points: ${points.length}');
+      
+      debugPrint('[HealthService] $label: Got ${points.length} points');
+      if (points.isEmpty) {
+        debugPrint('[HealthService] ⚠️ WARNING: No $label data found!');
+      } else {
+        for (final p in points.take(3)) {
+          debugPrint('[HealthService] $label sample: ${p.type} = ${p.value} (${p.dateFrom} -> ${p.dateTo})');
+        }
+      }
+      
       return points;
     } catch (e) {
-      debugPrint('[HealthService] $label fetch error: $e');
+      debugPrint('[HealthService] ❌ $label fetch error: $e');
+      debugPrint('[HealthService] Stack trace: ${StackTrace.current}');
       return [];
     }
   }
