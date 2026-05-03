@@ -43,9 +43,12 @@ class PermissionsController extends Notifier<PermissionsState> {
     final healthService = ref.read(healthServiceProvider);
     final locationService = ref.read(locationServiceProvider);
 
-    final health =
-        await healthService.hasPermissions() &&
-        await Permission.activityRecognition.isGranted;
+    // On Android, hasPermissions() can return null (unknown).
+    // Treat null as potentially granted to avoid wrongly blocking the user.
+    final healthPerm = await healthService.hasPermissionsNullable();
+    final activityPerm = await Permission.activityRecognition.isGranted;
+    // null = unknown on Android, treat as granted to avoid blocking
+    final health = (healthPerm ?? true) && activityPerm;
     final location = await locationService.hasPermission();
     final camera = await Permission.camera.isGranted;
     final mic = await Permission.microphone.isGranted;

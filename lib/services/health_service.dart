@@ -108,7 +108,8 @@ class HealthService {
   }
 
   /// Check if health data access is authorized
-  Future<bool> hasPermissions() async {
+  /// Returns true if granted, false if denied, null if unknown
+  Future<bool?> hasPermissionsNullable() async {
     try {
       await _ensureConfigured();
       final authorized = await _health.hasPermissions(
@@ -116,11 +117,16 @@ class HealthService {
         permissions: _permissions,
       );
       debugPrint('[HealthService] hasPermissions: $authorized');
-      return authorized ?? false;
+      return authorized;
     } catch (e) {
       debugPrint('[HealthService] hasPermissions error: $e');
-      return false;
+      return null;
     }
+  }
+
+  /// Check if health data access is authorized (returns false for null/unknown)
+  Future<bool> hasPermissions() async {
+    return (await hasPermissionsNullable()) ?? false;
   }
 
   /// Fetch health data since [since] timestamp
@@ -147,25 +153,27 @@ class HealthService {
     try {
       await _ensureConfigured();
 
-      // Check permissions first
-      var hasPerms = await hasPermissions();
-      if (!hasPerms) {
-        debugPrint('[HealthService] No permissions - requesting authorization');
+      // On Android, hasPermissions() often returns null even when permissions
+      // ARE granted. Strategy: check permission status, but if it's null
+      // (unknown), try fetching data anyway. Only block if explicitly false.
+      final permStatus = await hasPermissionsNullable();
+      debugPrint('[HealthService] Permission status: $permStatus (null=unknown, true=granted, false=denied)');
+
+      if (permStatus == false) {
+        // Definitely denied — request authorization
+        debugPrint('[HealthService] Permissions denied - requesting authorization');
         final granted = await requestAuthorization();
         if (!granted) {
-          debugPrint('[HealthService] Authorization denied - requesting again after delay');
-          // Try requesting one more time after a short delay
-          await Future.delayed(const Duration(milliseconds: 500));
-          final retryGranted = await requestAuthorization();
-          if (!retryGranted) {
-            debugPrint('[HealthService] Authorization denied after retry - returning empty');
-            return _emptyPayload();
-          }
-          hasPerms = true;
-        } else {
-          hasPerms = true;
+          debugPrint('[HealthService] Authorization denied - returning empty');
+          return _emptyPayload();
         }
+      } else if (permStatus == null) {
+        // Unknown — try to request just in case, but don't block if it fails
+        debugPrint('[HealthService] Permission status unknown - attempting authorization');
+        await requestAuthorization();
       }
+      // permStatus == true: already granted, proceed
+
       await _requestHistoryAuthorizationIfAvailable();
 
       final healthData = <HealthDataPoint>[
