@@ -43,7 +43,9 @@ class PermissionsController extends Notifier<PermissionsState> {
     final healthService = ref.read(healthServiceProvider);
     final locationService = ref.read(locationServiceProvider);
 
-    final health = await healthService.hasPermissions();
+    final health =
+        await healthService.hasPermissions() &&
+        await Permission.activityRecognition.isGranted;
     final location = await locationService.hasPermission();
     final camera = await Permission.camera.isGranted;
     final mic = await Permission.microphone.isGranted;
@@ -58,6 +60,16 @@ class PermissionsController extends Notifier<PermissionsState> {
 
   Future<void> requestHealth() async {
     final healthService = ref.read(healthServiceProvider);
+
+    final activityRecognition = await Permission.activityRecognition.request();
+    if (!activityRecognition.isGranted) {
+      state = state.copyWith(
+        healthGranted: false,
+        healthError:
+            'Activity recognition permission is needed to read fitness data.',
+      );
+      return;
+    }
 
     // Check if Health Connect is available first
     final available = await healthService.isHealthConnectAvailable();
@@ -74,7 +86,9 @@ class PermissionsController extends Notifier<PermissionsState> {
     final granted = await healthService.requestAuthorization();
     state = state.copyWith(
       healthGranted: granted,
-      healthError: granted ? null : 'Permission denied. Please allow in Health Connect settings.',
+      healthError: granted
+          ? null
+          : 'Permission denied. Please allow in Health Connect settings.',
     );
   }
 
@@ -97,5 +111,5 @@ class PermissionsController extends Notifier<PermissionsState> {
 
 final permissionsControllerProvider =
     NotifierProvider<PermissionsController, PermissionsState>(() {
-  return PermissionsController();
-});
+      return PermissionsController();
+    });

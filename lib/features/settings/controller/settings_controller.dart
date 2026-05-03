@@ -29,7 +29,9 @@ class SettingsController extends Notifier<SettingsState> {
     final locationService = ref.read(locationServiceProvider);
 
     state = SettingsState(
-      healthGranted: await healthService.hasPermissions(),
+      healthGranted:
+          await healthService.hasPermissions() &&
+          await Permission.activityRecognition.isGranted,
       locationGranted: await locationService.hasPermission(),
       cameraGranted: await Permission.camera.isGranted,
       microphoneGranted: await Permission.microphone.isGranted,
@@ -49,5 +51,5 @@ class SettingsController extends Notifier<SettingsState> {
 
 final settingsControllerProvider =
     NotifierProvider<SettingsController, SettingsState>(() {
-  return SettingsController();
-});
+      return SettingsController();
+    });
