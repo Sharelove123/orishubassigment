@@ -47,7 +47,11 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
   Map<String, dynamic> _buildPayload() {
     final now = DateTime.now().toUtc();
-    final startOfDay = DateTime.utc(now.year, now.month, now.day).toIso8601String();
+    final startOfDay = DateTime.utc(
+      now.year,
+      now.month,
+      now.day,
+    ).toIso8601String();
     final nowIso = now.toIso8601String();
 
     return {
@@ -60,8 +64,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "end_time": nowIso,
           "platform": "android",
           "start_time": startOfDay,
-          "source_name": "health_connect"
-        }
+          "source_name": "health_connect",
+        },
       ],
       "weight": [
         {
@@ -71,8 +75,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "end_time": nowIso,
           "platform": "android",
           "start_time": nowIso,
-          "source_name": "health_connect"
-        }
+          "source_name": "health_connect",
+        },
       ],
       "calories": [
         {
@@ -82,8 +86,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "end_time": nowIso,
           "platform": "android",
           "start_time": startOfDay,
-          "source_name": "health_connect"
-        }
+          "source_name": "health_connect",
+        },
       ],
       "location": [
         {
@@ -93,8 +97,8 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "latitude": double.tryParse(_latController.text) ?? 0.0,
           "platform": "android",
           "longitude": double.tryParse(_longController.text) ?? 0.0,
-          "timestamp": nowIso
-        }
+          "timestamp": nowIso,
+        },
       ],
       "heart_rate": [
         {
@@ -104,9 +108,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
           "end_time": nowIso,
           "platform": "android",
           "start_time": nowIso,
-          "source_name": "health_connect"
-        }
-      ]
+          "source_name": "health_connect",
+        },
+      ],
     };
   }
 
@@ -116,7 +120,10 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Polso Health Data', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Polso Health Data',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -127,52 +134,87 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FadeInDown(
-              child: _buildBanner(),
-            ),
+            FadeInDown(child: _buildBanner()),
             const SizedBox(height: 32),
             _buildInputSection('Device Configuration', [
-              _buildTextField(_deviceIdController, 'Device ID', Icons.devices_other),
+              _buildTextField(
+                _deviceIdController,
+                'Device ID',
+                Icons.devices_other,
+              ),
             ]),
             const SizedBox(height: 24),
             _buildInputSection('Activity & Energy', [
-              Row(
-                children: [
-                  Expanded(child: _buildTextField(_stepsController, 'Steps', Icons.directions_run, keyboardType: TextInputType.number)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(_caloriesController, 'Calories', Icons.local_fire_department, keyboardType: TextInputType.number)),
-                ],
+              _buildResponsiveFieldPair(
+                _buildTextField(
+                  _stepsController,
+                  'Steps',
+                  Icons.directions_run,
+                  keyboardType: TextInputType.number,
+                ),
+                _buildTextField(
+                  _caloriesController,
+                  'Calories',
+                  Icons.local_fire_department,
+                  keyboardType: TextInputType.number,
+                ),
               ),
             ]),
             const SizedBox(height: 24),
             _buildInputSection('Vitals & Metrics', [
-              Row(
-                children: [
-                  Expanded(child: _buildTextField(_weightController, 'Weight (kg)', Icons.monitor_weight_outlined, keyboardType: TextInputType.number)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(_heartRateController, 'Heart Rate (bpm)', Icons.favorite_border, keyboardType: TextInputType.number)),
-                ],
+              _buildResponsiveFieldPair(
+                _buildTextField(
+                  _weightController,
+                  'Weight (kg)',
+                  Icons.monitor_weight_outlined,
+                  keyboardType: TextInputType.number,
+                ),
+                _buildTextField(
+                  _heartRateController,
+                  'Heart Rate (bpm)',
+                  Icons.favorite_border,
+                  keyboardType: TextInputType.number,
+                ),
               ),
             ]),
             const SizedBox(height: 24),
             _buildInputSection('Positioning', [
-              Row(
-                children: [
-                  Expanded(child: _buildTextField(_latController, 'Latitude', Icons.map_outlined, keyboardType: TextInputType.number)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(_longController, 'Longitude', Icons.map_outlined, keyboardType: TextInputType.number)),
-                ],
+              _buildResponsiveFieldPair(
+                _buildTextField(
+                  _latController,
+                  'Latitude',
+                  Icons.map_outlined,
+                  keyboardType: TextInputType.number,
+                ),
+                _buildTextField(
+                  _longController,
+                  'Longitude',
+                  Icons.map_outlined,
+                  keyboardType: TextInputType.number,
+                ),
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: _buildTextField(_accuracyController, 'Accuracy', Icons.gps_fixed, keyboardType: TextInputType.number)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(_altitudeController, 'Altitude', Icons.height, keyboardType: TextInputType.number)),
-                ],
+              _buildResponsiveFieldPair(
+                _buildTextField(
+                  _accuracyController,
+                  'Accuracy',
+                  Icons.gps_fixed,
+                  keyboardType: TextInputType.number,
+                ),
+                _buildTextField(
+                  _altitudeController,
+                  'Altitude',
+                  Icons.height,
+                  keyboardType: TextInputType.number,
+                ),
               ),
               const SizedBox(height: 12),
-              _buildTextField(_speedController, 'Speed', Icons.speed, keyboardType: TextInputType.number),
+              _buildTextField(
+                _speedController,
+                'Speed',
+                Icons.speed,
+                keyboardType: TextInputType.number,
+              ),
             ]),
             const SizedBox(height: 40),
             if (state.resultMessage != null)
@@ -183,14 +225,25 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                 onPressed: state.isSubmitting
                     ? null
                     : () {
-                        ref.read(submissionControllerProvider.notifier).submitData(
+                        ref
+                            .read(submissionControllerProvider.notifier)
+                            .submitData(
                               _buildPayload(),
                               deviceId: _deviceIdController.text,
                             );
                       },
-                icon: state.isSubmitting ? const SizedBox.shrink() : const Icon(Icons.sync),
+                icon: state.isSubmitting
+                    ? const SizedBox.shrink()
+                    : const Icon(Icons.sync),
                 label: state.isSubmitting
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Text('Sync All Data'),
               ),
             ),
@@ -210,7 +263,11 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.health_and_safety_outlined, color: AppTheme.primaryTeal, size: 40),
+          const Icon(
+            Icons.health_and_safety_outlined,
+            color: AppTheme.primaryTeal,
+            size: 40,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -219,9 +276,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
                 Text(
                   'Comprehensive Sync',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.darkNavy,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.darkNavy,
+                  ),
                 ),
                 const Text('Fill all fields to sync your health record.'),
               ],
@@ -251,7 +308,30 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {TextInputType? keyboardType}) {
+  Widget _buildResponsiveFieldPair(Widget first, Widget second) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 420) {
+          return Column(children: [first, const SizedBox(height: 12), second]);
+        }
+
+        return Row(
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: 12),
+            Expanded(child: second),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    TextInputType? keyboardType,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
@@ -270,7 +350,9 @@ class _SubmissionScreenState extends ConsumerState<SubmissionScreen> {
       decoration: BoxDecoration(
         color: state.isSuccess ? Colors.green[50] : Colors.red[50],
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: state.isSuccess ? Colors.green[100]! : Colors.red[100]!),
+        border: Border.all(
+          color: state.isSuccess ? Colors.green[100]! : Colors.red[100]!,
+        ),
       ),
       child: Row(
         children: [

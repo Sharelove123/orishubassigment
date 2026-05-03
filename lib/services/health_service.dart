@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 class HealthService {
   final Health _health = Health();
   bool _configured = false;
+  bool _historyAuthorizationRequested = false;
 
   static const List<HealthDataType> _permissionTypes = [
     HealthDataType.STEPS,
@@ -21,7 +22,7 @@ class HealthService {
     HealthDataType.TOTAL_CALORIES_BURNED,
   ];
 
-  static const Duration _weightLookback = Duration(days: 30);
+  static const Duration _weightLookback = Duration(days: 365);
   static const Duration _sleepLookback = Duration(days: 7);
 
   static List<HealthDataAccess> get _permissions =>
@@ -69,10 +70,38 @@ class HealthService {
         permissions: _permissions,
       );
       debugPrint('[HealthService] Authorization result: $authorized');
+      if (authorized) {
+        await _requestHistoryAuthorizationIfAvailable();
+      }
       return authorized;
     } catch (e) {
       debugPrint('[HealthService] Authorization error: $e');
       return false;
+    }
+  }
+
+  Future<void> _requestHistoryAuthorizationIfAvailable() async {
+    try {
+      final available = await _health.isHealthDataHistoryAvailable();
+      if (!available) {
+        debugPrint('[HealthService] Health data history is not available');
+        return;
+      }
+
+      final alreadyAuthorized = await _health.isHealthDataHistoryAuthorized();
+      if (alreadyAuthorized) {
+        return;
+      }
+
+      if (_historyAuthorizationRequested) {
+        return;
+      }
+      _historyAuthorizationRequested = true;
+
+      final granted = await _health.requestHealthDataHistoryAuthorization();
+      debugPrint('[HealthService] Health data history authorization: $granted');
+    } catch (e) {
+      debugPrint('[HealthService] History authorization error: $e');
     }
   }
 
@@ -122,6 +151,7 @@ class HealthService {
           return _emptyPayload();
         }
       }
+      await _requestHistoryAuthorizationIfAvailable();
 
       final healthData = <HealthDataPoint>[
         ...await _getHealthData(

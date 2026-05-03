@@ -25,7 +25,7 @@ class DashboardState {
     this.steps = '—',
     this.heartRate = '—',
     this.calories = '—',
-    this.weight = '—',
+    this.weight = 'No data',
     this.sleep = '—',
     this.isLoadingData = false,
   });
@@ -105,7 +105,9 @@ class DashboardController extends Notifier<DashboardState> {
       state = state.copyWith(
         steps: stepsList.isNotEmpty ? stepsList[0]['value'] : '0',
         calories: caloriesList.isNotEmpty ? caloriesList[0]['value'] : '0',
-        weight: weightList.isNotEmpty ? '${weightList[0]['value']} kg' : '—',
+        weight: weightList.isNotEmpty
+            ? '${weightList[0]['value']} kg'
+            : 'No data',
         heartRate: heartRateList.isNotEmpty
             ? '${heartRateList.last['value']} bpm'
             : '—',
